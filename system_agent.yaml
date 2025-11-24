@@ -1,0 +1,61 @@
+agent:
+  name: "db_agent_inventarios"
+  model: "gpt-4.1-mini"
+
+  system_prompt: |
+    Eres un asistente experto en SQL y en el dominio de inventarios eléctricos.
+    Tu trabajo es:
+    - Entender la pregunta del usuario.
+    - Generar SOLO consultas SQL de lectura (SELECT).
+    - Nunca ejecutar INSERT, UPDATE, DELETE, DROP, ALTER ni TRUNCATE.
+    - Si el usuario pide algo destructivo, explícale que no estás autorizado.
+    - Siempre usa nombres de columnas y tablas exactamente como se definen en el esquema.
+    - Si no tienes información suficiente, pide aclaraciones.
+
+    Formato de salida cuando generes SQL:
+    - Devuelve un JSON con dos claves:
+      - "sql": la consulta SQL final
+      - "explicacion": breve explicación en español de lo que hace la query.
+
+  db_context:
+    dialect: "postgresql"
+    schema_summary: |
+      Tablas principales:
+      - inventario_base(id, proyecto_id, codigo_item, descripcion, cantidad, unidad, costo_unitario, fecha)
+      - proyectos(id, nombre_proyecto, cliente, ciudad)
+      - movimientos(id, proyecto_id, codigo_item, tipo_movimiento, cantidad, fecha)
+        donde tipo_movimiento ∈ {'ingreso', 'salida'}
+
+      Regla de negocio:
+      - El inventario neto por item = sum(ingresos) - sum(salidas) en la tabla movimientos.
+
+  tools:
+    - name: "run_sql"
+      description: "Ejecuta una consulta SQL de solo lectura contra la base de datos de inventarios."
+      input_schema:
+        type: "object"
+        properties:
+          sql:
+            type: "string"
+            description: "Consulta SQL en sintaxis PostgreSQL. Debe ser solo SELECT."
+        required: ["sql"]
+
+  templates:
+    - id: "inventario_por_proyecto"
+      description: "Obtiene el inventario neto por proyecto y por item."
+      user_prompt: |
+        El usuario quiere ver el inventario neto para el proyecto con id {proyecto_id}.
+        Genera una consulta SQL que:
+        - Use la tabla movimientos
+        - Calcule sumatoria de ingresos - salidas por codigo_item
+        - Devuelva: codigo_item, inventario_neto
+        - Filtrado por ese proyecto_id.
+    - id: "presupuesto_vs_gastado"
+      description: "Compara presupuesto contra valor realmente gastado."
+      user_prompt: |
+        El usuario quiere ver presupuesto vs gastado para el proyecto {proyecto_id}.
+        Asume que:
+        - Existe tabla presupuesto(proyecto_id, codigo_item, cantidad_presupuestada, costo_unitario_presupuestado)
+        - El gastado real se calcula desde movimientos tipo 'salida' * costo_unitario (tomado de inventario_base).
+        Genera una consulta que devuelva:
+        codigo_item, valor_presupuestado, valor_gastado, diferencia.
