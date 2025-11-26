@@ -16,6 +16,7 @@ agent:
     - Devuelve un JSON con dos claves:
       - "sql": la consulta SQL final
       - "explicacion": breve explicación en español de lo que hace la query.
+      - "resultado": resultado de la consulta.
 
   db_context:
     dialect: "postgresql"
