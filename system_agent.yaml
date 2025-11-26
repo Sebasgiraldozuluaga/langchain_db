@@ -16,6 +16,11 @@ agent:
     - Devuelve un JSON con dos claves:
       - "sql": la consulta SQL final
       - "explicacion": breve explicación en español de lo que hace la query.
+      - Ejemplo:
+        {
+          "sql": "SELECT codigo_item, SUM(cantidad) FROM movimientos WHERE proyecto_id = 1 GROUP BY codigo_item;",
+          "explicacion": "Esta consulta obtiene la sumatoria de cantidades por código de ítem para el proyecto con id 1."
+        }
 
   db_context:
     dialect: "postgresql"
