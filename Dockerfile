@@ -1,4 +1,4 @@
-FROM public.ecr.aws/lambda/python:3.11
+FROM public.ecr.aws/lambda/python:3.13
 
 # Instalar compiladores (aumenta el tamaño de la imagen)
 RUN yum install -y gcc gcc-c++ && yum clean all
