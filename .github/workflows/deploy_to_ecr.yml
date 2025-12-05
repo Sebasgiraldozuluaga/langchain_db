@@ -1,45 +1,66 @@
-name: Deploy to Amazon ECR
+name: Build, Push & Deploy Lambda (Telegram)
 
 on:
   push:
-    branches:
-      - main
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION: us-east-1
+  ECR_REPOSITORY: telegram-lambda
+  REGISTRY: 714306165585.dkr.ecr.us-east-1.amazonaws.com
+
 
 jobs:
-  build-and-push:
-    name: Build and Push to ECR
+  build-push:
     runs-on: ubuntu-latest
-
+    outputs:
+      image_uri: ${{ steps.img.outputs.IMAGE_URI }}
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+      - name: Print GH context
+        run: |
+          echo "GITHUB_REPOSITORY=${GITHUB_REPOSITORY}"
+          echo "GITHUB_REF=${GITHUB_REF}"
+          echo "GITHUB_SHA=${GITHUB_SHA}"
 
-      - name: Log in to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v1
-        env:
-          AWS_REGION: ${{ secrets.AWS_REGION }}
+      - name: Checkout (explicit)
+        uses: actions/checkout@v4
         with:
-          mask-password: false
-          registry-type: private
-          skip-logout: false
+          repository: ${{ github.repository }}
+          ref: ${{ github.ref }}
+          fetch-depth: 1
+          token: ${{ github.token }}
 
-      - name: Set up QLDB credentials
-        run: echo "QLDB credentials set up"
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_REGION: ${{ secrets.AWS_REGION }}
+      - name: Configure AWS credentials (Access Keys)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
 
-      - name: Build Docker image
+      - name: Ensure ECR repository exists
         run: |
-          docker build -t ${{ secrets.ECR_REPOSITORY }}:latest .
+          aws ecr describe-repositories --repository-names "$ECR_REPOSITORY" >/dev/null 2>&1 || \
+          aws ecr create-repository --repository-name "$ECR_REPOSITORY" >/dev/null
 
-      - name: Build, tag, and push image to ECR
-        env:
-          AWS_REGION: ${{ secrets.AWS_REGION }}
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build & push image
+        id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.ECR_REPOSITORY }}:latest
+            ${{ env.REGISTRY }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
+
+      - name: Set IMAGE_URI
+        id: img
         run: |
-          IMAGE_TAG=$(date +%Y%m%d%H%M%S)
-          docker tag ${{ secrets.ECR_REPOSITORY }}:latest ${{ secrets.ECR_REPOSITORY }}:$IMAGE_TAG
-          docker tag ${{ secrets.ECR_REPOSITORY }}:$IMAGE_TAG ${{ secrets.ECR_URI }}
-          docker push ${{ secrets.ECR_URI }}
+          echo "IMAGE_URI=${REGISTRY}/${ECR_REPOSITORY}:${GITHUB_SHA}" >> $GITHUB_OUTPUT
