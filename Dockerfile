@@ -26,4 +26,4 @@ ENV OPENAI_API_KEY=$OPENAI_API_KEY \
     PG_PASSWORD=$PG_PASSWORD \
     PG_PORT=$PG_PORT
 
-CMD ["uvicorn", "app.api:api", "--host", "0.0.0.0", "--port", "80"]
+CMD ["uvicorn", "app.api:api", "--host", "0.0.0.0", "--port", "8080"]
