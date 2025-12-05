@@ -17,6 +17,11 @@ jobs:
       - name: Log in to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
+        with:
+          region: ${{ secrets.AWS_REGION }}
+          mask-password: false
+          registry-type: private
+          skip-logout: false
 
       - name: Set up QLDB credentials
         run: echo "QLDB credentials set up"
