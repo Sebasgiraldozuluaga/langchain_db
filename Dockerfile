@@ -7,8 +7,7 @@ COPY ./requirements.txt /code/requirements.txt
 
 RUN pip install --no-cache-dir --upgrade -r /code/requirements.txt
 
-COPY ./app /code/app
-COPY ./system_agent.yaml /code/system_agent.yaml
+COPY . .
 
 # Usar argumentos de construcción para las variables de entorno
 ARG OPENAI_API_KEY
