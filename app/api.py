@@ -2,6 +2,7 @@
 
 from fastapi import FastAPI
 from app.main import run_agent, get_logs
+from mangum import Mangum
 
 
 api = FastAPI()
@@ -19,3 +20,5 @@ def query_agent(prompt: str):
 def log_history():
      logs = get_logs()
      return {"logs": logs}
+
+handler = Mangum(api)

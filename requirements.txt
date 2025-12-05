@@ -61,3 +61,4 @@ xxhash==3.6.0
 yarl==1.22.0
 zstandard==0.25.0
 fastapi[standard]>=0.123.4
+mangum>=0.14.0,<1.0.0
