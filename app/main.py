@@ -5,11 +5,8 @@ import yaml
 
 from langchain_openai import ChatOpenAI
 from langchain_community.utilities import SQLDatabase
-from langchain_community.agent_toolkits import create_sql_agent
-from langchain_community.agent_toolkits.sql.base import (
-    SQLDatabaseToolkit,
-    create_sql_agent,
-)
+from langchain_community.agent_toolkits import create_sql_agent, SQLDatabaseToolkit
+
 
 #cargar las env
 load_dotenv()
@@ -29,7 +26,9 @@ system_prompt = config["agent"]["system_prompt"]
 agent_name = config["agent"]["name"]
 model_name = config["agent"].get("model", "gpt-4o-mini")
 
-llm = ChatOpenAI(model_name=model_name, temperature=0)
+log_history = []
+
+llm = ChatOpenAI(model=model_name, temperature=0)
 db = SQLDatabase.from_uri(DATABASE_URL)
 
 agent = create_sql_agent(
@@ -38,14 +37,17 @@ agent = create_sql_agent(
     agent_type="tool-calling",
     verbose=True,
     prefix=system_prompt 
-)   
+)
 
-#Consulta
-query = "ultimas 5 compras de la tabla factura dame valor"
-response = agent.run(query)
-print(response)
+def run_agent(query: str) -> str:
+    result = agent.invoke({"input": query})
+    output = result["output"]
+    log_history.append({"query": query, "response": output})
+    return output
 
-
+def get_logs():
+    return log_history
+    
 #GENERAR UN PROMPT PERSONALIZADO 
 
 #  DARLE CONTEXTO CON QUERIES 
