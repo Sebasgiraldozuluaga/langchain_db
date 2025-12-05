@@ -1,11 +1,14 @@
+# Dockerfile
 FROM public.ecr.aws/lambda/python:3.13
 
-# Instalar compiladores (aumenta el tamaño de la imagen)
-RUN yum install -y gcc gcc-c++ && yum clean all
+# Paquetes del sistema si necesitas psycopg2 nativo; si usas psycopg2-binary, puedes omitir build-base
+# RUN yum install -y postgresql15-libs
 
-COPY ./requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# Copiar requirements primero para aprovechar cache de Docker
+COPY requirements.txt .
+RUN python -m pip install --upgrade pip && pip install -r requirements.txt
 
-COPY . ${LAMBDA_TASK_ROOT}
-
+# Instalar dependencias necesaria
+# Copiar el resto del código
+COPY . .
 CMD ["app.api.lambda_handler"]
