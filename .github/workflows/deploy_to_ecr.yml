@@ -11,7 +11,7 @@ permissions:
 
 env:
   AWS_REGION: us-east-1
-  ECR_REPOSITORY: telegram-lambda
+  ECR_REPOSITORY: langchain
   REGISTRY: 714306165585.dkr.ecr.us-east-1.amazonaws.com
 
 
@@ -59,6 +59,13 @@ jobs:
           tags: |
             ${{ env.REGISTRY }}/${{ env.ECR_REPOSITORY }}:latest
             ${{ env.REGISTRY }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
+          build-args: |
+            OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
+            PG_HOST=${{ secrets.PG_HOST }}
+            PG_PORT=${{ secrets.PG_PORT }}
+            PG_USER=${{ secrets.PG_USER }} 
+            PG_PASSWORD=${{ secrets.PG_PASSWORD }}
+            PG_DATABASE=${{ secrets.PG_DATABASE }}
 
       - name: Set IMAGE_URI
         id: img
