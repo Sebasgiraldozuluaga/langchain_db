@@ -19,6 +19,7 @@ jobs:
         uses: aws-actions/amazon-ecr-login@v1
 
       - name: Set up QLDB credentials
+        run: echo "QLDB credentials set up"
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -36,4 +37,3 @@ jobs:
           docker tag ${{ secrets.ECR_REPOSITORY }}:latest ${{ secrets.ECR_REPOSITORY }}:$IMAGE_TAG
           docker tag ${{ secrets.ECR_REPOSITORY }}:$IMAGE_TAG ${{ secrets.ECR_URI }}
           docker push ${{ secrets.ECR_URI }}
-          
