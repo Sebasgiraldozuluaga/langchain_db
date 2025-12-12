@@ -23,7 +23,7 @@ def health():
 @api.get('/query')
 def query_agent(prompt: str):
      response = run_agent(prompt)
-     return {"Result": response}
+     return {"Result": response.get("respuesta", "No hay respuesta")}
 
 @api.get('/logs')
 def log_history():
@@ -62,16 +62,26 @@ async def telegram_webhook(
     #reply = run_agent(prompt)
     try:
         reply = run_agent(prompt)
+        # Si reply es un JSON string, parsearlo
+        if isinstance(reply, str) and reply.strip().startswith('{'):
+            import json
+            reply_json = json.loads(reply)
+            reply_text = reply_json.get("respuesta", reply)
+        # Si reply ya es un dict
+        elif isinstance(reply, dict):
+            reply_text = reply.get("respuesta", str(reply))
+        else:
+            reply_text = reply
     except Exception as e:
         print("Error en run_agent:", e)
-        reply = "Hubo un error interno ejecutando la IA."
+        reply_text = "Hubo un error interno ejecutando la IA."
 
     # Respuesta a Telegram
     r = requests.post(
         API_URL,
-        json={"chat_id": chat_id, "text": reply}
+        json={"chat_id": chat_id, "text": reply_text}
     )
-    print("Respuesta Telegram:",r.status_code, r.text)
+    print("Respuesta Telegram:",r.status_code, r.json().get("respuesta", "No hay respuesta"))
 
     return {"ok": True}
 
