@@ -12,7 +12,6 @@ agent:
     - Siempre usa nombres de columnas y tablas exactamente como se definen en el esquema.
     - Si no tienes información suficiente, pide aclaraciones.
 
-    Formato de salida cuando generes SQL:
     - Devuelve un JSON con dos claves:
       - "sql": la consulta SQL final
       - "explicacion": breve explicación en español de lo que hace la query.
